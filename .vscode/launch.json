@@ -17,12 +17,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/webserver",
             "args": [
-                "4000"
+                "4004"
             ],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",
             "env": { "DYLD_LIBRARY_PATH": "net" },
             "terminal": "external"
+            
         }
     ]
 }

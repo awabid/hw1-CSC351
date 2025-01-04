@@ -1,16 +1,9 @@
 /*
  * Copyright (c) 2018, Hammurabi Mendes.
- * Licence: BSD 2-clause
+ * License: BSD 2-clause
  */
 #ifndef NETWORKING_H
 #define NETWORKING_H
-
-// Interested in learning how to implement this library?
-//
-// In Networking and Distributed Systems (CSC 359) we do:
-//  - Implement the functionality below using the UNIX system calls and the sockets API
-//  - Implement the HTTP protocol parsing
-//  - Implement encryption and HTTPS
 
 /**
  * Create an accept socket in the specified \p port.
@@ -47,6 +40,15 @@ void get_peer_information(int socket, char *host_string, int host_length, int *p
  * @param flag 1 to turn non-blockingness ON; 0 to turn it OFF.
  */
 void make_nonblocking(int socket, int flag);
+
+/**
+ * Create a connected socket in the specified \p destination and \p port.
+ *
+ * @param destination Destination where we should connect to.
+ * @param port Port where we should connect to.
+ * @return The connected socket, or -1 if an error is found -- errno indicate the error.
+ */
+int create_client(char *destination, char *port);
 
 /**
  * Returns true if the buffer contains a complete HTTP request header.

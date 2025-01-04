@@ -22,7 +22,6 @@ static void setup_signal_handler(int signal, void (*handler)(int));
 static void handle_termination(int signal);
 
 static int done = 0;
-
 int server_statemachine(int argc, char **argv) {
 	// Syscall results
 	int result;
