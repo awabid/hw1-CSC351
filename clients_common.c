@@ -237,9 +237,9 @@ int flush_buffer(struct client *client) {
  */
 int obtain_file_size(char *filename) {
     // Return the size of the 'monsters_inc.jpeg' file. If you try to download anything else form your webserver, you're in trouble...
-    struct stat *file_stat;
-    if(stat(filename, file_stat)) {
-        return file_stat->st_size;
+    struct stat file_stat;
+    if(stat(filename, &file_stat)==0) {
+        return file_stat.st_size;
     }
     return -1;
 }

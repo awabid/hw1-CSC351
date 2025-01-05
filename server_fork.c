@@ -59,7 +59,7 @@ int server_fork(int argc, char **argv) {
         
         if ((client_socket = accept_client(accept_socket))==-1){
             if (errno == EINTR){
-                client_socket = accept_client(accept_socket);
+                continue;
             }
         }
         

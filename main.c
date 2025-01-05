@@ -7,4 +7,6 @@
 
 int main(int argc, char **argv) {
 	return server_fork(argc, argv);
+	//return server_statemachine(argc, argv);
+
 }
