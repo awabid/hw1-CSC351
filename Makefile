@@ -1,5 +1,5 @@
 PROGRAM = webserver
-OBJECTS = main.o clients_common.o server_fork.o clients_statemachine.o
+OBJECTS = main.o clients_common.o server_fork.o
 
 webserver-clean: clean webserver
 
