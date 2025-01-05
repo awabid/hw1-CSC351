@@ -56,9 +56,13 @@ int server_fork(int argc, char **argv) {
         int child_ID;
         int client_socket;
 
-        do {
-            client_socket = accept_client(accept_socket);
-        } while((client_socket == -1) && (errno == EINTR));
+        
+        if ((client_socket = accept_client(accept_socket))==-1){
+            if (errno == EINTR){
+                client_socket = accept_client(accept_socket);
+            }
+        }
+        
 
         // Step 9: Wait for new connections, but ignore interrupted accept_client calls because of SIGCHLD
 
@@ -74,7 +78,7 @@ int server_fork(int argc, char **argv) {
             if(read_request(client)) {
                 write_reply(client);
             }
-
+            
             exit(client->status);
         }
         else if(child_ID < 0) {

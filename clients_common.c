@@ -82,7 +82,7 @@ int read_request(struct client *client) {
             return 0;
         }
         //X (BUFFER_SIZE - 1) - client->nread
-        chunk_size = read(client->socket, client->buffer + client->nread, BUFFER_SIZE - 1);
+        chunk_size = read(client->socket, client->buffer + client->nread, (BUFFER_SIZE - 1) - client->nread);
     }
 
     // This is what you do on errors
@@ -158,9 +158,9 @@ int write_reply(struct client *client) {
     if(client->file != NULL) {
         // If the file size is not multiple of BUFFER_SIZE, we are sending junk!
         // No error treatment for write: should use flush_buffer
-        ssize_t bytes_read = fread(client->buffer, sizeof(char), BUFFER_SIZE, client->file);
+        int bytes_read;
         //X >=
-        while(bytes_read > 0) {
+        while((bytes_read = fread(client->buffer, sizeof(char), BUFFER_SIZE, client->file))>0) {
             client->ntowrite = bytes_read;
             client->nwritten = 0;
             if(flush_buffer(client) == 0) {
@@ -168,13 +168,14 @@ int write_reply(struct client *client) {
                 finish_client(client);
                 return 0;
             }
+            //printf("bytes_read: %d", bytes_read);
             if(bytes_read < BUFFER_SIZE) {
+                printf("bytes_read: %d", bytes_read);
                 fclose(client->file);
                 client->file = NULL;
                 finish_client(client);
                 return 1;
             }
-            bytes_read = fread(client->buffer, sizeof(char), BUFFER_SIZE, client->file);
         }
         client->status = STATUS_BAD;
         finish_client(client);
