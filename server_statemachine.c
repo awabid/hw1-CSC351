@@ -23,119 +23,136 @@ static void handle_termination(int signal);
 
 static int done = 0;
 int server_statemachine(int argc, char **argv) {
-	// Syscall results
-	int result;
+    // Syscall results
+    int result;
 
-	if(argc < 2) {
-		fprintf(stderr, "Usage: server <port>\n");
+    if(argc < 2) {
+        fprintf(stderr, "Usage: server <port>\n");
 
-		return EXIT_FAILURE;
-	}
+        return EXIT_FAILURE;
+    }
 
-	char *port = argv[1];
+    char *port = argv[1];
 
-	int accept_socket = create_server(atoi(port));
+    int accept_socket = create_server(atoi(port));
 
-	if(accept_socket == -1) {
-		fprintf(stderr, "Error creating server\n");
+    if(accept_socket == -1) {
+        fprintf(stderr, "Error creating server\n");
 
-		return EXIT_FAILURE;
-	}
+        return EXIT_FAILURE;
+    }
 
-	make_nonblocking(accept_socket, 1);
+    make_nonblocking(accept_socket, 1);
 
-	// Step 10: Treat signals the same way that you treated in your server_fork.c (but only SIGPIPE and SIGTERM) [copy/paste!]
-	// Treat signals here
+    // Step 10: Treat signals the same way that you treated in your server_fork.c (but only SIGPIPE and SIGTERM) [copy/paste!]
+    // Treat signals here
+    setup_signal_handler(SIGTERM, handle_termination);
+    setup_signal_handler(SIGPIPE, SIG_IGN);
 
-	// Start linked list of of clients
-	init();
+    // Start linked list of of clients
+    init();
 
-	struct client *current;
+    struct client *current;
 
-	int maximum_descriptor;
+    int maximum_descriptor;
 
-	fd_set set_read;
-	fd_set set_write;
+    fd_set set_read;
+    fd_set set_write;
 
-	while(!done) {
-		// Step 11: Zero read and write sets
+    while(!done) {
+        // Step 11: Zero read and write sets
+        FD_ZERO(&set_read);
+        FD_ZERO(&set_write);
+        // Step 12: Adds the accept socket into the read set
+        FD_SET(accept_socket, &set_read);
+        maximum_descriptor = accept_socket;
+        // Step 13: Iterate over all currently accepted clients [an example of iteration if given below], and:
+        //  - If a client's state is E_RECV_REQUEST, add the client to the read set
+        //  - If a client's state is E_SEND_REPLY, add the client to the write set
+        //
+        // While you are doing this, calculate the maximum descriptor number among the acceptance socket,
+        // and all the client sockets that you find in the loop above.
+        for(current = head; current != NULL; current = current->next) {
+            // Code here
+            if(current->state == E_RECV_REQUEST) {
+                FD_SET(current->socket, &set_read);
+            }
+            else if(current->state == E_SEND_REPLY) {
+                FD_SET(current->socket, &set_write);
+            }
+            if(current->socket > maximum_descriptor) {
+                maximum_descriptor = current->socket;
+            }
+        }
 
-		// Step 12: Adds the accept socket into the read set
+        // Step 14: Call select(), blocking until anything can be read from or written to.
+        // If a new connection is made, the accept socket is marked as readable;
+        // If new data comes from an accepted client, its socket is marked as readable;
+        // If new data can be written to an accepted client without blocking, its socket is marked as writeable.
+        result = select(maximum_descriptor, &set_read, &set_write, NULL, NULL);
+        // result = select(...);
 
-		// Step 13: Iterate over all currently accepted clients [an example of iteration if given below], and:
-		//  - If a client's state is E_RECV_REQUEST, add the client to the read set
-		//  - If a client's state is E_SEND_REPLY, add the client to the write set
-		//
-		// While you are doing this, calculate the maximum descriptor number among the acceptance socket,
-		// and all the client sockets that you find in the loop above.
-		for(current = head; current != NULL; current = current->next) {
-			// Code here
-		}
+        // Step 15: If you are here, some socket is ready to be written or to be read from.
+        // You have two things to do:
 
-		// Step 14: Call select(), blocking until anything can be read from or written to.
-		// If a new connection is made, the accept socket is marked as readable;
-		// If new data comes from an accepted client, its socket is marked as readable;
-		// If new data can be written to an accepted client without blocking, its socket is marked as writeable.
+        // Step 15.1: Test if the accept socket has been flagged ready for reading. Use the appropriate macro described in select(2).
+        //           If so, make the accepted client socket nonblocking, and call insert_client(client_socket);
+        if(FD_ISSET(accept_socket, &set_read)) {
+            char host[1024];
+            int port;
 
-		// result = select(...);
+            int client_socket = accept_client(accept_socket);
 
-		// Step 15: If you are here, some socket is ready to be written or to be read from.
-		// You have two things to do:
+            get_peer_information(client_socket, host, 1024, &port);
+            printf("New connection from %s, port %d\n", host, port);
 
-		// Step 15.1: Test if the accept socket has been flagged ready for reading. Use the appropriate macro described in select(2).
-		//           If so, make the accepted client socket nonblocking, and call insert_client(client_socket);
-		if(0/* accept socket flagged for reading */) {
-			char host[1024];
-			int port;
+            make_nonblocking(client_socket, 1);
 
-			int client_socket = accept_client(accept_socket);
+            // Inserts the client into the list
 
-			get_peer_information(client_socket, host, 1024, &port);
-			printf("New connection from %s, port %d\n", host, port);
+            insert_client(client_socket);
+        }
 
-			make_nonblocking(client_socket, 1);
+        // Step 15.2: Iterate over all currently accepted clients [an example of iteration if given below]
+        //           If the client is ready for reading OR ready for writing then call handle_client(client), passing the client pointer.
+        for(current = head; current != NULL; current = current->next) {
+            // Code here
+            if(FD_ISSET(current->socket, &set_read) || FD_ISSET(current->socket, &set_write)) {
+                handle_client(current);
+            }
+        }
 
-			// Inserts the client into the list
+        // Remove dead clients after we process them above
+        while(remove_client(-1)) {
+        };
+    }
 
-			insert_client(client_socket);
-		}
+    printf("Finishing program cleanly... %ld operations served\n", operations_completed);
 
-		// Step 15.2: Iterate over all currently accepted clients [an example of iteration if given below]
-		//           If the client is ready for reading OR ready for writing then call handle_client(client), passing the client pointer.
-		for(current = head; current != NULL; current = current->next) {
-			// Code here
-		}
+    // If we are here, we got a termination signal
+    // Go over all clients and close their sockets
 
-		// Remove dead clients after we process them above
-		while(remove_client(-1)) {};
-	}
+    for(current = head; current != NULL; current = current->next) {
+        close(current->socket);
+    }
 
-	printf("Finishing program cleanly... %ld operations served\n", operations_completed);
-
-	// If we are here, we got a termination signal
-	// Go over all clients and close their sockets
-
-	for(current = head; current != NULL; current = current->next) {
-		close(current->socket);
-	}
-
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 void setup_signal_handler(int signal, void (*handler)(int)) {
-	struct sigaction request;
+    struct sigaction request;
 
-	memset(&request, 0, sizeof(struct sigaction));
+    memset(&request, 0, sizeof(struct sigaction));
 
-	request.sa_handler = handler;
+    request.sa_handler = handler;
 
-	if(sigaction(signal, &request, NULL) == -1) {
-		perror("sigaction");
+    if(sigaction(signal, &request, NULL) == -1) {
+        perror("sigaction");
 
-		exit(EXIT_FAILURE);
-	}
+        exit(EXIT_FAILURE);
+    }
 }
 
 void handle_termination(int signal) {
-	done = 1;
+    done = 1;
 }

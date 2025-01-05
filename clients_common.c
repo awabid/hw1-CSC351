@@ -170,7 +170,6 @@ int write_reply(struct client *client) {
             }
             //printf("bytes_read: %d", bytes_read);
             if(bytes_read < BUFFER_SIZE) {
-                printf("bytes_read: %d", bytes_read);
                 fclose(client->file);
                 client->file = NULL;
                 finish_client(client);
