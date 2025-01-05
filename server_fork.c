@@ -56,11 +56,9 @@ int server_fork(int argc, char **argv) {
         int child_ID;
         int client_socket;
 
-        if((client_socket = accept_client(accept_socket)) == -1) {
-            if(errno == EINTR) {
-                continue;
-            }
-        }
+        do {
+            client_socket = accept_client(accept_socket);
+        } while((client_socket == -1) && (errno == EINTR));
 
         // Step 9: Wait for new connections, but ignore interrupted accept_client calls because of SIGCHLD
 
@@ -79,10 +77,16 @@ int server_fork(int argc, char **argv) {
 
             exit(client->status);
         }
-        wait(&child_ID);
-        close(client_socket);
-        
-        client_socket= -1;
+        else if(child_ID < 0) {
+            printf("\nfork failed\n");
+            exit(1);
+        }
+        //wait(&child_ID);
+        // X
+        else {
+            close(client_socket);
+            //client_socket = -1;
+        }
     }
 
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
@@ -113,8 +117,10 @@ void childHandler(int signal) {
     int status;
 
     while(waitpid(-1, &status, WNOHANG) != -1) {
-        if(WEXITSTATUS(status) == STATUS_OK) {
-            operations_completed++;
+        if(WIFEXITED(status)) {
+            if(WEXITSTATUS(status) == STATUS_OK) {
+                operations_completed++;
+            }
         }
     }
 }

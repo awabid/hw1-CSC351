@@ -64,7 +64,7 @@ int read_request(struct client *client) {
     // Also, you may get only half of the header. What happens then?
 
     ssize_t chunk_size = read(client->socket, client->buffer, BUFFER_SIZE - 1);
-    //&& client->nread < BUFFER_SIZE
+    //X && client->nread < BUFFER_SIZE
     while((chunk_size) > 0 ) {
         client->nread += chunk_size;
         if(header_complete(client->buffer, client->nread)) {
@@ -81,7 +81,8 @@ int read_request(struct client *client) {
             finish_client(client);
             return 0;
         }
-        chunk_size = read(client->socket, client->buffer + client->nread, (BUFFER_SIZE - 1) - client->nread);
+        //X (BUFFER_SIZE - 1) - client->nread
+        chunk_size = read(client->socket, client->buffer + client->nread, BUFFER_SIZE - 1);
     }
 
     // This is what you do on errors
@@ -158,7 +159,8 @@ int write_reply(struct client *client) {
         // If the file size is not multiple of BUFFER_SIZE, we are sending junk!
         // No error treatment for write: should use flush_buffer
         ssize_t bytes_read = fread(client->buffer, sizeof(char), BUFFER_SIZE, client->file);
-        while(bytes_read >= 0) {
+        //X >=
+        while(bytes_read > 0) {
             client->ntowrite = bytes_read;
             client->nwritten = 0;
             if(flush_buffer(client) == 0) {
