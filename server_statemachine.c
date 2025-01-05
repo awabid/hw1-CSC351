@@ -89,7 +89,8 @@ int server_statemachine(int argc, char **argv) {
         // If a new connection is made, the accept socket is marked as readable;
         // If new data comes from an accepted client, its socket is marked as readable;
         // If new data can be written to an accepted client without blocking, its socket is marked as writeable.
-        result = select(maximum_descriptor, &set_read, &set_write, NULL, NULL);
+        ;
+        result = select(maximum_descriptor+1, &set_read, &set_write, NULL, NULL);
         // result = select(...);
 
         // Step 15: If you are here, some socket is ready to be written or to be read from.
