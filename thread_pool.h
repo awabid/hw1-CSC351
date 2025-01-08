@@ -124,6 +124,7 @@ void *execute_request(void *arg) {
 
         //free () allocated memory to avoid leaks
         free(client);
+        free(request);
     }
 
     pthread_exit(NULL);
