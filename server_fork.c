@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2017, Hammurabi Mendes.
- * Licence: BSD 2-clause
+ * Licence: BSD 2-clause 
+ * 
+ * 
+ * HW1 implementation: Awais Abid
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,10 +20,6 @@
 #include "networking.h"
 
 #include "thread_pool.h"
-
-// REMEMBER:
-// Making variables and prototypes "static" limits their visibility to the current file!
-// If you get an error about "duplicate symbols, either for variables or prototypes, declare them static here
 
 static int done = 0;
 
@@ -45,7 +44,8 @@ int server_fork(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Step 7: Call your function to setup signal handlers for SIGPIPE, SIGCHLD, and SIGTERM.
+    //Setup signal handlers for SIGPIPE, SIGCHLD, and SIGTERM.
+
     setupSignalHandler(SIGCHLD, childHandler);
     setupSignalHandler(SIGTERM, termHandler);
     setupSignalHandler(SIGPIPE, SIG_IGN);
@@ -58,20 +58,21 @@ int server_fork(int argc, char **argv) {
         int child_ID;
         int client_socket;
 
+        //Wait for new connections, but ignore interrupted accept_client calls because of SIGCHLD
         if((client_socket = accept_client(accept_socket)) == -1) {
             if(errno == EINTR) {
                 continue;
             }
         }
 
-        // Step 9: Wait for new connections, but ignore interrupted accept_client calls because of SIGCHLD
-
         get_peer_information(client_socket, host, 1024, &port);
         printf("New connection from %s, port %d\n", host, port);
 
         struct client *client = make_client(client_socket);
+
+        //producer call
         put_request(client);
-        
+
         //close(client_socket);
         /* 
 
@@ -99,7 +100,7 @@ int server_fork(int argc, char **argv) {
             //free(client);
         } */
     }
-    
+
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
     finish_threads();
     return EXIT_SUCCESS;
