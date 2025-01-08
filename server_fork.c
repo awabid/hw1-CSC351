@@ -50,8 +50,6 @@ int server_fork(int argc, char **argv) {
     setupSignalHandler(SIGTERM, termHandler);
     setupSignalHandler(SIGPIPE, SIG_IGN);
 
-    start_threads();
-
     while(!done) {
         char host[1024];
         int port;
@@ -66,24 +64,13 @@ int server_fork(int argc, char **argv) {
         }
 
         get_peer_information(client_socket, host, 1024, &port);
-        printf("New connection from %s, port %d\n", host, port);
-
-        struct client *client = make_client(client_socket);
-
-        //producer call
-        put_request(client);
-
-        //close(client_socket);
-        /* 
-
-        //struct client *client = make_client(client_socket);
+        printf("New connection from %s, port %d\n", host, port); 
         
+        //Fork a different process to handle each client
         child_ID = fork();
 
         if(child_ID == 0) {
             struct client *client = make_client(client_socket);
-            // Step 8: Fork a different process to handle each client
-            //         The children should exit with the status in client->status (defined in clients_common.h)
             if(read_request(client)) {
                 write_reply(client);
             }
@@ -94,15 +81,14 @@ int server_fork(int argc, char **argv) {
             printf("\nfork failed\n");
             exit(1);
         }
-
+        //parent closes client's socket
         else {
             close(client_socket);
-            //free(client);
-        } */
+        } 
     }
 
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
-    finish_threads();
+
     return EXIT_SUCCESS;
 }
 
@@ -132,7 +118,6 @@ void childHandler(int signal) {
         if(WIFEXITED(status)) {
             if(WEXITSTATUS(status) == STATUS_OK) {
                 operations_completed++;
-                printf("ops completed: %ld", operations_completed);
             }
         }
     }
