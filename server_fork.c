@@ -69,36 +69,8 @@ int server_fork(int argc, char **argv) {
         printf("New connection from %s, port %d\n", host, port);
 
         struct client *client = make_client(client_socket);
-
-        //producer call
-        put_request(client);
-
-        //close(client_socket);
-        /* 
-
-        //struct client *client = make_client(client_socket);
         
-        child_ID = fork();
-
-        if(child_ID == 0) {
-            struct client *client = make_client(client_socket);
-            // Step 8: Fork a different process to handle each client
-            //         The children should exit with the status in client->status (defined in clients_common.h)
-            if(read_request(client)) {
-                write_reply(client);
-            }
-
-            exit(client->status);
-        }
-        else if(child_ID < 0) {
-            printf("\nfork failed\n");
-            exit(1);
-        }
-
-        else {
-            close(client_socket);
-            //free(client);
-        } */
+        put_request(client);
     }
 
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
