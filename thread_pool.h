@@ -1,6 +1,10 @@
 /*
  * Copyright (c) 2017, Hammurabi Mendes.
  * Licence: BSD 2-clause
+ * 
+ * 
+ * Author (HW1 implementation): Awais Abid
+ * 
  */
 #include "clients_common.h"
 #include <stdatomic.h>
@@ -94,16 +98,15 @@ void put_request(struct client *client) {
 void *execute_request(void * arg) {
     struct request *request;
     // getRequest () blocks if there 's no request
-    // See the producer - consumer examples
-    // in the " Locks & Condition Variables " class
-    while(!atomic_load(&threads_done)) {
+
+    while(1) {
         pthread_mutex_lock(&request_list->mutex);
-        while(request_list->size == 0) {
+        while(request_list->size == 0 && !atomic_load(&threads_done)) {
             pthread_cond_wait(&request_list->empty, &request_list->mutex);
         }
-        if(request_list->size == 0) {
+        if (atomic_load(&threads_done)){
             pthread_mutex_unlock(&request_list->mutex);
-            continue;
+            break;
         }
         request = request_list->head;
         request_list->head = request_list->head->next;
@@ -118,11 +121,10 @@ void *execute_request(void * arg) {
             // Increment the number of operations
             atomic_fetch_add(&operations_completed, 1);
         }
-        // make sure to free () allocated memory to avoid leaks
+        //free () allocated memory to avoid leaks
         free(client);
     }
-    free(request);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 int finish_threads(void) {
@@ -136,6 +138,10 @@ int finish_threads(void) {
             return EXIT_FAILURE;
         }
     }
+    pthread_mutex_destroy(&request_list->mutex);
+    pthread_cond_destroy(&request_list->empty);
+    free(request_list);
+
     return EXIT_SUCCESS;
 }
 

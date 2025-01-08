@@ -71,7 +71,7 @@ int server_fork(int argc, char **argv) {
 
         struct client *client = make_client(client_socket);
         put_request(client);
-
+        
         //close(client_socket);
         /* 
 
@@ -99,9 +99,9 @@ int server_fork(int argc, char **argv) {
             //free(client);
         } */
     }
-    finish_threads();
+    
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
-
+    finish_threads();
     return EXIT_SUCCESS;
 }
 
