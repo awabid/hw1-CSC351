@@ -50,6 +50,8 @@ int server_fork(int argc, char **argv) {
     setupSignalHandler(SIGTERM, termHandler);
     setupSignalHandler(SIGPIPE, SIG_IGN);
 
+    start_threads();
+
     while(!done) {
         char host[1024];
         int port;
@@ -67,6 +69,14 @@ int server_fork(int argc, char **argv) {
         get_peer_information(client_socket, host, 1024, &port);
         printf("New connection from %s, port %d\n", host, port);
 
+        struct client *client = make_client(client_socket);
+        put_request(client);
+
+        //close(client_socket);
+        /* 
+
+        //struct client *client = make_client(client_socket);
+        
         child_ID = fork();
 
         if(child_ID == 0) {
@@ -86,9 +96,10 @@ int server_fork(int argc, char **argv) {
 
         else {
             close(client_socket);
-        }
+            //free(client);
+        } */
     }
-
+    finish_threads();
     printf("Finishing program cleanly... %ld operations served\n", operations_completed);
 
     return EXIT_SUCCESS;
