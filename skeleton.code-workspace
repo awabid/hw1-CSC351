@@ -14,7 +14,8 @@
 		"files.associations": {
 			"stdio.h": "c",
 			"stat.h": "c",
-			"stdatomic.h": "c"
+			"stdatomic.h": "c",
+			"server_statemachine.h": "c"
 		}
 	}
 }

@@ -20,7 +20,7 @@
 
 #include "networking.h"
 
-#include "thread_pool.h"
+//#include "thread_pool.h"
 
 static void setup_signal_handler(int signal, void (*handler)(int));
 static void handle_termination(int signal);
@@ -113,7 +113,7 @@ int server_statemachine(int argc, char **argv) {
         }
 
         // Iterate over all currently accepted clients [an example of iteration if given below]
-        //           If the client is ready for reading OR ready for writing then call handle_client(client), passing the client pointer.
+        //     If the client is ready for reading OR ready for writing then call handle_client(client), passing the client pointer.
         for(current = head; current != NULL; current = current->next) {
             if(FD_ISSET(current->socket, &set_read) || FD_ISSET(current->socket, &set_write)) {
                 handle_client(current);
@@ -144,7 +144,7 @@ void setup_signal_handler(int signal, void (*handler)(int)) {
 
     if(sigaction(signal, &request, NULL) == -1) {
         perror("sigaction");
-        
+
         exit(EXIT_FAILURE);
     }
 }
